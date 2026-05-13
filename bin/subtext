@@ -1,0 +1,61 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use YakNet\Subtext\Parser\CommentParser;
+use YakNet\Subtext\AI\GeminiAnalyzer;
+
+$app = new Application('YakNet Subtext', '2.0.0');
+
+$app->register('analyze')
+    ->setDescription('Analyze comments in a file or directory')
+    ->addArgument('path', InputArgument::REQUIRED, 'The file or directory to analyze')
+    ->addOption('ai', null, InputOption::VALUE_NONE, 'Enable AI insights')
+    ->setCode(function (InputInterface $input, OutputInterface $output) {
+        $io = new SymfonyStyle($input, $output);
+        $path = $input->getArgument('path');
+        $enableAi = $input->getOption('ai');
+
+        if (!file_exists($path)) {
+            $io->error("Path not found: $path");
+            return Command::FAILURE;
+        }
+
+        $parser = new CommentParser();
+        $files = is_dir($path) ? glob("$path/*.php") : [$path];
+
+        $allComments = [];
+        foreach ($files as $file) {
+            $allComments = array_merge($allComments, $parser->parse($file));
+        }
+
+        $io->title("Subtext Analysis - Found " . count($allComments) . " comments");
+
+        foreach ($allComments as $comment) {
+            $io->writeln("<fg=yellow>[Line {$comment->line}]</> <fg=white>{$comment->text}</>");
+            if ($comment->context) {
+                $io->writeln("  <fg=gray>Context:</> <fg=cyan>{$comment->context}</>");
+            }
+            $io->writeln("");
+        }
+
+        if ($enableAi) {
+            $io->section("AI Insights (Developer Psychology)");
+            $apiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+            $analyzer = new GeminiAnalyzer($apiKey);
+            $analysis = $analyzer->analyze($allComments);
+            $io->writeln($analysis ?? "<fg=red>AI analysis unavailable.</>");
+        }
+
+        return Command::SUCCESS;
+    });
+
+$app->run();
