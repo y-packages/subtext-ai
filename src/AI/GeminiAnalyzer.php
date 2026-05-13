@@ -11,8 +11,12 @@ class GeminiAnalyzer
 
     public function __construct(private readonly ?string $apiKey)
     {
-        if ($this->apiKey && class_exists(Gemini::class)) {
-            $this->client = Gemini::client($this->apiKey);
+        if ($this->apiKey) {
+            try {
+                $this->client = \Gemini::client($this->apiKey);
+            } catch (\Throwable) {
+                $this->client = null;
+            }
         }
     }
 
@@ -21,8 +25,16 @@ class GeminiAnalyzer
      */
     public function analyze(array $comments): ?string
     {
-        if (!$this->client || empty($comments)) {
-            return null;
+        if (!$this->apiKey) {
+            return "AI Analysis failed: GEMINI_API_KEY is missing.";
+        }
+
+        if (!$this->client) {
+            return "AI Analysis failed: Gemini Client could not be initialized.";
+        }
+
+        if (empty($comments)) {
+            return "No comments found to analyze.";
         }
 
         $commentTexts = array_map(fn($c) => "[Line {$c->line}] {$c->text}", $comments);
@@ -44,10 +56,11 @@ Please provide the report in a professional but insightful tone. Use Markdown.
 PROMPT;
 
         try {
-            $result = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
+            // Stable model: gemini-1.5-flash
+            $result = $this->client->generativeModel('gemini-1.5-flash')->generateContent($prompt);
             return $result->text();
-        } catch (\Throwable) {
-            return "AI Analysis failed. Please check your API key and connection.";
+        } catch (\Throwable $e) {
+            return "AI Analysis failed: " . $e->getMessage();
         }
     }
 }
