@@ -51,6 +51,9 @@ class CommentParser
         return trim(preg_replace('/^\s*\* ?/m', '', $text));
     }
 
+    /**
+     * @param array<int, string|array{0: int, 1: string, 2: int}> $tokens
+     */
     private function getNextCodeLine(array $tokens, int $currentIndex): ?string
     {
         for ($i = $currentIndex + 1; $i < count($tokens); $i++) {

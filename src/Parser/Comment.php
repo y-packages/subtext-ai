@@ -11,6 +11,9 @@ readonly class Comment
         public ?string $context = null // The line of code following the comment
     ) {}
 
+    /**
+     * @return array{text: string, line: int, type: string, context: string|null}
+     */
     public function toArray(): array
     {
         return [

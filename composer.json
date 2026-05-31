@@ -31,5 +31,8 @@
     },
     "bin": [
         "bin/subtext"
-    ]
+    ],
+    "require-dev": {
+        "phpstan/phpstan": "^2.2"
+    }
 }
