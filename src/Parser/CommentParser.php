@@ -14,6 +14,9 @@ class CommentParser
         }
 
         $content = file_get_contents($filePath);
+        if ($content === false) {
+            return [];
+        }
         $tokens = token_get_all($content);
         $comments = [];
 
@@ -47,8 +50,15 @@ class CommentParser
 
     private function cleanText(string $text): string
     {
-        $text = preg_replace('/^\/\*\*?|\*\/|\/\/|#/', '', $text);
-        return trim(preg_replace('/^\s*\* ?/m', '', $text));
+        $cleaned = preg_replace('/^\/\*\*?|\*\/|\/\/|#/', '', $text);
+        if (!is_string($cleaned)) {
+            $cleaned = '';
+        }
+        $cleaned2 = preg_replace('/^\s*\* ?/m', '', $cleaned);
+        if (!is_string($cleaned2)) {
+            $cleaned2 = '';
+        }
+        return trim($cleaned2);
     }
 
     /**

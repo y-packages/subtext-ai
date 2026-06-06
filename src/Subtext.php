@@ -32,7 +32,8 @@ class Subtext
         ];
 
         if ($ai) {
-            $apiKey = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+            $apiKeyEnv = $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY');
+            $apiKey = is_string($apiKeyEnv) ? $apiKeyEnv : null;
             $analyzer = new GeminiAnalyzer($apiKey);
             $response['ai_analysis'] = $analyzer->analyze($comments);
         }
